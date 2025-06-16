@@ -85,14 +85,27 @@ async def play(interaction: discord.Interaction, song_query: str):
     audio_url = first_track["url"]
     title = first_track.get("title", "Untitled")
     
-    ffmpeg_options = {
-        "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-        "options": "-vn -c:a libopus -b:a 96k"
-    }
+    guild_id = str(interaction.guild.id)
+    if SONG_QUEUES.get(guild_id) is None:
+        SONG_QUEUES[guild_id] = deque()
+    SONG_QUEUES[guild_id].append((audio_url, title))
     
-    source = discord.FFmpegOpusAudio(audio_url, **ffmpeg_options, executable="bin/ffmpeg/ffmpeg")
-    
-    voice_client.play(source)
+    if voice_client.is_playing() or voice_client.is_paused():
+        await interaction.followup.send(f"Added to queue: **{title}**")
+    else:
+        await interaction.followup.send(f"Now playing: **{title}**")
+        await play_next_song(voice_client, guild_id, interaction.channel)
+        
+        
+@bot.tree.command(name="skip", description="Skip the current playing song.")
+async def skip(interaction: discord.Interaction):
+    if interaction.guild.voice_client and (intereaction.guild.voice_client.is_playing() or interaction.guild.voice_client.is_paused()):
+        interaction.guild.voice_client.stop()
+        await interaction.response.send_message("Skipped the current song.")
+    else:
+        await interaction.response.send_message("Not playing anything to skip.")
+        
+        
 
 async def play_next_song(voice_client, guild_id, channel):
     if SONG_QUEUES[guild_id]:
@@ -109,7 +122,11 @@ async def play_next_song(voice_client, guild_id, channel):
                 print(f"Error playing audio: {error}")
             asyncio.run_coroutine_threadsafe(play_next_song(voice_client, guild_id, channel), bot.loop)
         
-        voice_client.play(source)
+        voice_client.play(source, after=after_play)
+        asyncio.create_task(channel.send(f"Now playing: **{title}**"))
+    else:
+        await voice_client.disconnect()
+        SONG_QUEUES[guild_id] = deque()
 
     
 bot.run(TOKEN)
