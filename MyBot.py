@@ -14,7 +14,7 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 
 SONG_QUEUES = {}
 
-GUILD_ID = 749579527239499826
+
 
 async def search_ytdlp_async(query, ydl_opts):
     loop = asyncio.get_running_loop()
@@ -32,8 +32,7 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.event
 async def on_ready():
-    test_guild = discord.Object(id=GUILD_ID)
-    await bot.tree.sync(guild=test_guild)
+    await bot.tree.sync()
     
     print(f"{bot.user} is online!")
     
