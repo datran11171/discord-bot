@@ -99,7 +99,7 @@ async def play(interaction: discord.Interaction, song_query: str):
         
 @bot.tree.command(name="skip", description="Skip the current playing song.")
 async def skip(interaction: discord.Interaction):
-    if interaction.guild.voice_client and (intereaction.guild.voice_client.is_playing() or interaction.guild.voice_client.is_paused()):
+    if interaction.guild.voice_client and (interaction.guild.voice_client.is_playing() or interaction.guild.voice_client.is_paused()):
         interaction.guild.voice_client.stop()
         await interaction.response.send_message("Skipped the current song.")
     else:
