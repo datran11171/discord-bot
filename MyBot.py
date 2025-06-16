@@ -105,7 +105,48 @@ async def skip(interaction: discord.Interaction):
     else:
         await interaction.response.send_message("Not playing anything to skip.")
         
+@bot.tree.command(name="pause", description="Pause the current playing song.")
+async def pause(interaction: discord.Interaction):
+    voice_client = interaction.guild.voice_client
+    
+    if voice_client is None:
+        return await interaction.response.send_message("Not connected to a voice channel.")
+    
+    if not voice_client.is_playing():
+        return await interaction.response.send_message("Not playing anything to pause.")
+    
+    voice_client.pause()
+    await interaction.response.send_message("Paused the current song.")
+    
+@bot.tree.command(name="resume", description="Resume the paused song.")
+async def resume(interaction: discord.Interaction):
+    voice_client = interaction.guild.voice_client
+    
+    if voice_client is None:
+        return await interaction.response.send_message("Not connected to a voice channel.")
+    
+    if not voice_client.is_paused():
+        return await interaction.response.send_message("Not paused, nothing to resume.")
+    
+    voice_client.resume()
+    await interaction.response.send_message("Resumed the current song.")
+    
+@bot.tree.command(name="stop", description="Stop the current playing song and clear the queue.")
+async def stop(interaction: discord.Interaction):
+    voice_client = interaction.guild.voice_client
+    
+    if not voice_client or not voice_client.is_connected():
+        return await interaction.response.send_message("Not connected to a voice channel.")
+    
+    guild_id_str = str(interaction.guild.id)
+    if guild_id_str in SONG_QUEUES:
+        SONG_QUEUES[guild_id_str].clear()
+    
+    if voice_client.is_playing() or voice_client.is_paused():
+        voice_client.stop()
         
+    await voice_client.disconnect()
+    await interaction.response.send_message("Stopped playback and disconnected!")
 
 async def play_next_song(voice_client, guild_id, channel):
     if SONG_QUEUES[guild_id]:
